@@ -78,18 +78,11 @@ def stop_stream(clean=True):
 
 def build_input_args(stream_url):
     parsed = urlparse(stream_url)
-    query_params = parse_qs(parsed.query)
-
-    referer = query_params.get("referer", [f"{parsed.scheme}://{parsed.netloc}/"])[0]
-    origin = query_params.get("origin", [f"{parsed.scheme}://{parsed.netloc}"])[0]
-
+    
     headers_list = [
         "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
-        f"Origin: {origin}",
-        f"Referer: {referer}",
         "Accept: */*",
-        "Accept-Encoding: gzip, deflate, br",
-        "Accept-Language: ar,en-US;q=0.9,en;q=0.8",
+        "Accept-Language: en-US,en;q=0.9",
     ]
     headers_str = "\r\n".join(headers_list) + "\r\n"
 
@@ -100,22 +93,13 @@ def build_input_args(stream_url):
         "-reconnect_streamed", "1",
         "-reconnect_delay_max", "10",
         "-headers", headers_str,
-        # إضافة البروكسي هنا (قم بتعويض البيانات المباشرة للبروكسي الخاص بك):
-        "-http_proxy", "http://USERNAME:PASSWORD@PROXY_IP:PORT"
     ]
 
-    clean_path = parsed.path.lower()
-    if clean_path.endswith(".ts"):
-        args.extend([
-            "-f", "mpegts",
-            "-probesize", "1048576",
-            "-analyzeduration", "2000000"
-        ])
-    else:
-        args.extend([
-            "-extension_picky", "0",
-            "-http_persistent", "0"
-        ])
+    # دعم تنسيقات HLS و TS عبر الـ Worker Proxy
+    args.extend([
+        "-extension_picky", "0",
+        "-http_persistent", "0"
+    ])
 
     args.extend(["-i", stream_url])
     return args
