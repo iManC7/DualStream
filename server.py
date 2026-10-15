@@ -80,14 +80,20 @@ def build_input_args(stream_url):
     parsed = urlparse(stream_url)
     query_params = parse_qs(parsed.query)
 
-    referer = query_params.get("referer", ["https://embed.st/"])[0]
-    origin = query_params.get("origin", ["https://embed.st"])[0]
+    # استخراج referer و origin من الرابط إن وُجدا، أو استخدام القيم الافتراضية
+    referer = query_params.get("referer", [f"{parsed.scheme}://{parsed.netloc}/"])[0]
+    origin = query_params.get("origin", [f"{parsed.scheme}://{parsed.netloc}"])[0]
 
     headers_list = [
         "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
         f"Origin: {origin}",
+        f"Referer: {referer}",
         "Accept: */*",
-        "Accept-Language: en-US,en;q=0.9",
+        "Accept-Encoding: gzip, deflate, br",
+        "Accept-Language: ar,en-US;q=0.9,en;q=0.8",
+        "Sec-Fetch-Dest: empty",
+        "Sec-Fetch-Mode: cors",
+        "Sec-Fetch-Site: cross-site",
     ]
     headers_str = "\r\n".join(headers_list) + "\r\n"
 
@@ -97,7 +103,6 @@ def build_input_args(stream_url):
         "-reconnect", "1",
         "-reconnect_streamed", "1",
         "-reconnect_delay_max", "10",
-        "-referer", referer,
         "-headers", headers_str,
     ]
 
