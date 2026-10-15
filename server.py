@@ -84,16 +84,19 @@ def build_input_args(stream_url):
     origin = query_params.get("origin", ["https://embed.st"])[0]
 
     headers_list = [
-        "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        f"Origin: {origin}"
+        "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/123.0.0.0 Safari/537.36",
+        f"Origin: {origin}",
+        "Accept: */*",
+        "Accept-Language: en-US,en;q=0.9",
     ]
     headers_str = "\r\n".join(headers_list) + "\r\n"
 
     args = [
-        "-thread_queue_size", "2048",
+        "-thread_queue_size", "4096",
+        "-rw_timeout", "15000000",
         "-reconnect", "1",
         "-reconnect_streamed", "1",
-        "-reconnect_delay_max", "5",
+        "-reconnect_delay_max", "10",
         "-referer", referer,
         "-headers", headers_str,
     ]
@@ -102,8 +105,8 @@ def build_input_args(stream_url):
     if clean_path.endswith(".ts"):
         args.extend([
             "-f", "mpegts",
-            "-probesize", "32768",
-            "-analyzeduration", "0"
+            "-probesize", "1048576",
+            "-analyzeduration", "2000000"
         ])
     else:
         args.extend([
@@ -140,7 +143,7 @@ def launch_stream(audio, video, segment_seconds=4, list_size=8):
         "-map", "1:v:0", "-map", "0:a:0",
         "-c:v", "copy",
         "-c:a", "aac", "-b:a", "128k", "-ar", "48000", "-ac", "2",
-        "-max_muxing_queue_size", "4096",
+        "-max_muxing_queue_size", "8192",
         "-f", "hls",
         "-hls_time", str(segment_seconds),
         "-hls_list_size", str(list_size),
@@ -229,6 +232,20 @@ class Handler(BaseHTTPRequestHandler):
                 "ffmpeg_found": True,
                 "stream_url": f"{base_url}/hls/index.m3u8",
             })
+            return
+        if path == "/api/log":
+            log_path = OUTPUT_DIR / "ffmpeg.log"
+            content = "لا يوجد سجل متاح حالياً."
+            if log_path.exists():
+                try:
+                    content = log_path.read_text(encoding="utf-8", errors="replace")
+                except Exception as e:
+                    content = f"خطأ في قراءة السجل: {e}"
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain; charset=utf-8")
+            self.add_cors()
+            self.end_headers()
+            self.wfile.write(content.encode("utf-8"))
             return
         if path.startswith("/hls/"):
             name = path.removeprefix("/hls/")
