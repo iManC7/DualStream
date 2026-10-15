@@ -80,7 +80,6 @@ def build_input_args(stream_url):
     parsed = urlparse(stream_url)
     query_params = parse_qs(parsed.query)
 
-    # استخراج referer و origin من الرابط إن وُجدا، أو استخدام القيم الافتراضية
     referer = query_params.get("referer", [f"{parsed.scheme}://{parsed.netloc}/"])[0]
     origin = query_params.get("origin", [f"{parsed.scheme}://{parsed.netloc}"])[0]
 
@@ -91,9 +90,6 @@ def build_input_args(stream_url):
         "Accept: */*",
         "Accept-Encoding: gzip, deflate, br",
         "Accept-Language: ar,en-US;q=0.9,en;q=0.8",
-        "Sec-Fetch-Dest: empty",
-        "Sec-Fetch-Mode: cors",
-        "Sec-Fetch-Site: cross-site",
     ]
     headers_str = "\r\n".join(headers_list) + "\r\n"
 
@@ -104,6 +100,8 @@ def build_input_args(stream_url):
         "-reconnect_streamed", "1",
         "-reconnect_delay_max", "10",
         "-headers", headers_str,
+        # إضافة البروكسي هنا (قم بتعويض البيانات المباشرة للبروكسي الخاص بك):
+        "-http_proxy", "http://USERNAME:PASSWORD@PROXY_IP:PORT"
     ]
 
     clean_path = parsed.path.lower()
